@@ -3,42 +3,471 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hello</title>
+  <title>MAX STEEL — Turbo Interface</title>
   <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+    *, *::before, *::after {
+      box-sizing: border-box;
       margin: 0;
-      font-family: sans-serif;
-      background-color: #f0f4ff;
+      padding: 0;
     }
-    h1 {
-      font-size: 3rem;
-      color: #2c3e50;
+
+    :root {
+      --black:    #08060F;
+      --mid:      #0D1B2E;
+      --blue:     #0A6EBD;
+      --electric: #06C8FF;
+      --yellow:   #FFD000;
+      --purple:   #9747FF;
+      --text:     #E8F4FF;
+      --dim:      rgba(232, 244, 255, 0.45);
+      --font: 'Bahnschrift', 'DIN Alternate', 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     }
-    h1 {
-      user-select: none;
-    }
+
     body {
+      background: var(--black);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(1.5rem, 4vh, 2.5rem);
       cursor: pointer;
+      overflow-x: hidden;
+      overflow-y: auto;
+      user-select: none;
+      position: relative;
+    }
+
+    canvas#hex-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    main {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: inherit;
+      padding: 2rem 1rem;
+    }
+
+    /* ── HEADER ───────────────────────────────── */
+
+    header {
+      text-align: center;
+    }
+
+    .eyebrow {
+      font-size: 0.6875rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--dim);
+      margin-bottom: 0.625rem;
+    }
+
+    .wordmark {
+      font-size: clamp(3rem, 9vw, 5.5rem);
+      font-stretch: normal;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      line-height: 1;
+      text-transform: uppercase;
+      text-wrap: balance;
+    }
+
+    .wordmark .max   { color: var(--yellow); }
+    .wordmark .steel { color: var(--text); }
+
+    /* ── CORE ─────────────────────────────────── */
+
+    .core-wrap {
+      --core: min(240px, 64vw);
+      position: relative;
+      width: var(--core);
+      height: var(--core);
+      flex-shrink: 0;
+    }
+
+    .ring, .orb, .burst {
+      position: absolute;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .ring.outer {
+      width: var(--core);
+      height: var(--core);
+      border: 1.5px solid rgba(6, 200, 255, 0.55);
+      border-top-color: transparent;
+      border-right-color: transparent;
+      animation: spin 7s linear infinite;
+      transition: animation-duration 0.1s;
+    }
+
+    .ring.outer.charged { animation-duration: 0.4s; }
+
+    .ring.outer::after {
+      content: '';
+      position: absolute;
+      inset: -1.5px;
+      border-radius: 50%;
+      border: 1.5px solid transparent;
+      border-bottom-color: rgba(255, 208, 0, 0.35);
+      border-left-color: rgba(255, 208, 0, 0.35);
+    }
+
+    .ring.middle {
+      width: calc(var(--core) * 0.8);
+      height: calc(var(--core) * 0.8);
+      border: 1px solid rgba(6, 200, 255, 0.28);
+      border-bottom-color: transparent;
+      border-left-color: transparent;
+      animation: spin 5s linear infinite reverse;
+    }
+
+    .ring.middle.charged { animation-duration: 0.3s; }
+
+    .orb {
+      width: calc(var(--core) * 0.585);
+      height: calc(var(--core) * 0.585);
+      background: radial-gradient(
+        circle at 38% 34%,
+        rgba(255, 208, 0, 0.95),
+        rgba(10, 110, 189, 0.9) 42%,
+        #08060F 80%
+      );
+      animation: pulse-glow 3s ease-in-out infinite alternate;
+    }
+
+    .orb.tapped {
+      animation: orb-tap 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+                 pulse-glow 3s ease-in-out infinite alternate;
+    }
+
+    .orb::after {
+      content: '';
+      position: absolute;
+      top: 18%;
+      left: 22%;
+      width: 26%;
+      height: 16%;
+      background: rgba(255, 255, 255, 0.28);
+      border-radius: 50%;
+      transform: rotate(-30deg);
+    }
+
+    .burst {
+      width: calc(var(--core) * 0.585);
+      height: calc(var(--core) * 0.585);
+      border: 2px solid var(--electric);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .burst.purple {
+      border-color: var(--purple);
+    }
+
+    .burst.pop {
+      animation: burst 0.5s ease-out forwards;
+    }
+
+    .burst.purple.pop {
+      animation: burst 0.65s ease-out 0.08s forwards;
+    }
+
+    @keyframes spin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @keyframes burst {
+      0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.75; }
+      100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0; }
+    }
+
+    @keyframes orb-tap {
+      0%   { transform: translate(-50%, -50%) scale(1); }
+      45%  { transform: translate(-50%, -50%) scale(1.13); }
+      72%  { transform: translate(-50%, -50%) scale(0.96); }
+      100% { transform: translate(-50%, -50%) scale(1); }
+    }
+
+    @keyframes pulse-glow {
+      from {
+        box-shadow:
+          0 0 clamp(20px, 5vw, 34px) rgba(6, 200, 255, 0.45),
+          0 0 clamp(40px, 10vw, 68px) rgba(6, 200, 255, 0.18),
+          inset 0 0 clamp(10px, 2.5vw, 18px) rgba(6, 200, 255, 0.25);
+      }
+      to {
+        box-shadow:
+          0 0 clamp(30px, 7vw, 52px) rgba(6, 200, 255, 0.65),
+          0 0 clamp(60px, 14vw, 100px) rgba(151, 71, 255, 0.22),
+          inset 0 0 clamp(14px, 3.5vw, 26px) rgba(6, 200, 255, 0.38);
+      }
+    }
+
+    @keyframes scan-in {
+      from { clip-path: inset(0 100% 0 0); }
+      to   { clip-path: inset(0 0% 0 0); }
+    }
+
+    /* ── STATUS ───────────────────────────────── */
+
+    .status {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .status-label {
+      font-size: 0.625rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    .readout {
+      font-size: clamp(0.95rem, 3.5vw, 1.375rem);
+      font-stretch: condensed;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--electric);
+      min-width: 22ch;
+      text-align: center;
+    }
+
+    .readout.scan {
+      animation: scan-in 0.3s ease-out both;
+    }
+
+    .bars {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .bar {
+      width: clamp(28px, 8vw, 38px);
+      height: 7px;
+      border-radius: 1px;
+      background: rgba(6, 200, 255, 0.14);
+      transition: background 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .bar.active {
+      background: var(--electric);
+      box-shadow: 0 0 8px var(--electric), 0 0 16px rgba(6, 200, 255, 0.35);
+    }
+
+    .bar.overload {
+      background: var(--yellow);
+      box-shadow: 0 0 8px var(--yellow), 0 0 16px rgba(255, 208, 0, 0.35);
+    }
+
+    /* ── HINT ─────────────────────────────────── */
+
+    .hint {
+      font-size: 0.625rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--dim);
+    }
+
+    /* ── CREATOR PORTRAIT ─────────────────────── */
+
+    .creator {
+      width: clamp(56px, 12vw, 80px);
+      height: clamp(56px, 12vw, 80px);
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid rgba(6, 200, 255, 0.35);
+      box-shadow:
+        0 0 12px rgba(6, 200, 255, 0.3),
+        0 0 28px rgba(151, 71, 255, 0.15);
+      display: block;
+    }
+
+    /* ── REDUCED MOTION ───────────────────────── */
+
+    @media (prefers-reduced-motion: reduce) {
+      .ring             { animation: none; }
+      .orb              { animation: none; }
+      .burst.pop        { animation: none; opacity: 0; }
+      .orb.tapped       { animation: none; }
+      .readout.scan     { animation: none; }
+    }
+
+    /* ── FOCUS ────────────────────────────────── */
+
+    body:focus-visible {
+      outline: 2px solid var(--electric);
+      outline-offset: 4px;
     }
   </style>
 </head>
 <body>
-  <h1 id="msg">Hello, I am so smart!</h1>
+  <canvas id="hex-bg"></canvas>
+
+  <main>
+    <header>
+      <p class="eyebrow">// MAX.STEEL &mdash; energy</p>
+      <h1 class="wordmark"><span class="max">MAX</span>&thinsp;<span class="steel">STEEL</span></h1>
+    </header>
+
+    <div class="core-wrap" role="img" aria-label="Turbo core">
+      <span class="ring outer" id="ring-outer"></span>
+      <span class="ring middle" id="ring-middle"></span>
+      <span class="orb" id="orb"></span>
+      <span class="burst" id="burst"></span>
+      <span class="burst purple" id="burst-purple"></span>
+    </div>
+
+    <div class="status">
+      <p class="status-label">energy</p>
+      <p class="readout" id="msg">LOCKED IN</p>
+      <div class="bars"
+           id="bars"
+           role="meter"
+           aria-label="Energy level"
+           aria-valuenow="1"
+           aria-valuemin="1"
+           aria-valuemax="5">
+        <span class="bar active"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+    </div>
+
+    <p class="hint">tap to go off</p>
+
+    <img
+      src="local branding assets/cute picture of me.png"
+      alt="Diego"
+      class="creator"
+    />
+  </main>
+
   <script>
-    let sos = 1;
-    const msg = document.getElementById('msg');
-    document.addEventListener('click', function () {
-      sos++;
-      if (sos > 4) {
-        msg.textContent = 'Hello, I am way too smart!';
-      } else {
-        msg.textContent = 'Hello, I am ' + 'so '.repeat(sos) + 'smart!';
+    // Hex background
+    (function () {
+      const canvas = document.getElementById('hex-bg');
+      const ctx    = canvas.getContext('2d');
+
+      function draw() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const r = 28;
+        const w = r * 2;
+        const h = r * Math.sqrt(3);
+
+        ctx.strokeStyle = 'rgba(6, 200, 255, 0.065)';
+        ctx.lineWidth   = 1;
+
+        for (let col = -1; col * (w * 0.75) < canvas.width + w; col++) {
+          for (let row = -1; row * h < canvas.height + h; row++) {
+            const cx = col * w * 0.75;
+            const cy = row * h + (col % 2 !== 0 ? h / 2 : 0);
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+              const angle = (Math.PI / 3) * i - Math.PI / 6;
+              const x = cx + r * Math.cos(angle);
+              const y = cy + r * Math.sin(angle);
+              i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.stroke();
+          }
+        }
       }
-    });
+
+      draw();
+      window.addEventListener('resize', draw);
+    })();
+
+    // Click interaction
+    (function () {
+      let sos = 1;
+
+      const msg        = document.getElementById('msg');
+      const bars       = document.getElementById('bars');
+      const barEls     = bars.querySelectorAll('.bar');
+      const burst      = document.getElementById('burst');
+      const burstPurple = document.getElementById('burst-purple');
+      const orb        = document.getElementById('orb');
+      const ringOuter  = document.getElementById('ring-outer');
+      const ringMiddle = document.getElementById('ring-middle');
+
+      const states = [
+        'LOCKED IN',
+        'SO LOCKED IN',
+        'SO SO LOCKED IN',
+        'SO SO SO LOCKED IN',
+        'ACTUALLY UNHINGED',
+      ];
+
+      function setText(text) {
+        msg.classList.remove('scan');
+        void msg.offsetWidth;
+        msg.textContent = text;
+        msg.classList.add('scan');
+      }
+
+      function updateBars(level) {
+        var over = level > 4;
+        barEls.forEach(function (bar, i) {
+          bar.classList.remove('active', 'overload');
+          if (i < level) bar.classList.add(over ? 'overload' : 'active');
+        });
+        bars.setAttribute('aria-valuenow', Math.min(level, 5));
+      }
+
+      function triggerBurst() {
+        burst.classList.remove('pop');
+        burstPurple.classList.remove('pop');
+        void burst.offsetWidth;
+        burst.classList.add('pop');
+        burstPurple.classList.add('pop');
+      }
+
+      function triggerOrbTap() {
+        orb.classList.remove('tapped');
+        void orb.offsetWidth;
+        orb.classList.add('tapped');
+      }
+
+      function triggerRingCharge() {
+        ringOuter.classList.add('charged');
+        ringMiddle.classList.add('charged');
+        setTimeout(function () {
+          ringOuter.classList.remove('charged');
+          ringMiddle.classList.remove('charged');
+        }, 500);
+      }
+
+      document.addEventListener('click', function () {
+        sos++;
+        var idx = Math.min(sos - 1, states.length - 1);
+        setText(states[idx]);
+        updateBars(sos);
+        triggerBurst();
+        triggerOrbTap();
+        triggerRingCharge();
+      });
+    })();
   </script>
 </body>
 </html>
